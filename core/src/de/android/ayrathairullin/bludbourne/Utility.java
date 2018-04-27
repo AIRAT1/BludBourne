@@ -3,7 +3,9 @@ package de.android.ayrathairullin.bludbourne;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.assets.loaders.TextureLoader;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 
@@ -59,5 +61,28 @@ public class Utility {
             Gdx.app.debug(TAG, "Map is not loaded: " + mapFilenamePath);
         }
         return map;
+    }
+
+    public static void loadTextureAsset(String textureFilenamePath) {
+        if (textureFilenamePath == null || textureFilenamePath.isEmpty()) {
+            return;
+        }
+        if (filePathResolver.resolve(textureFilenamePath).exists()) {
+            assetManager.setLoader(Texture.class, new TextureLoader(filePathResolver));
+            assetManager.load(textureFilenamePath, Texture.class);
+            assetManager.finishLoadingAsset(textureFilenamePath);
+        }else {
+            Gdx.app.log(TAG, "Texture doesn't exist: " + textureFilenamePath);
+        }
+    }
+
+    public static Texture getTextureAsset(String textureFilenamePath) {
+        Texture texture = null;
+        if (assetManager.isLoaded(textureFilenamePath)) {
+            texture = assetManager.get(textureFilenamePath, Texture.class);
+        }else {
+            Gdx.app.debug(TAG, "Texture is not loaded: " + textureFilenamePath);
+        }
+        return texture;
     }
 }
