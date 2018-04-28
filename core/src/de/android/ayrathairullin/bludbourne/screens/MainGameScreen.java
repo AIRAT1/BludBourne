@@ -3,6 +3,7 @@ package de.android.ayrathairullin.bludbourne.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -51,7 +52,23 @@ public class MainGameScreen implements Screen{
 
     @Override
     public void render(float delta) {
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        camera.position.set(currentPlayerSprite.getX(), currentPlayerSprite.getY(), 0);
+        camera.update();
+        currentPlayerFrame = player.getFrame();
+        updatePortalLayerActivation(player.boundingBox);
+        if (!isCollisionWithMapLayer(player.boundingBox)) {
+            player.setNextPositionToCurrent();
+        }
+        controller.update(delta);
+        mapRenderer.setView(camera);
+        mapRenderer.render();
 
+        mapRenderer.getBatch().begin();
+        mapRenderer.getBatch().draw(currentPlayerFrame, currentPlayerSprite.getX(),
+                currentPlayerSprite.getY(), 1, 1);
+        mapRenderer.getBatch().end();
     }
 
     @Override
