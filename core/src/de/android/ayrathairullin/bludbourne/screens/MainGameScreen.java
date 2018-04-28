@@ -7,7 +7,11 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Rectangle;
 
 public class MainGameScreen implements Screen{
     private static final String TAG = MainGameScreen.class.getSimpleName();
@@ -93,6 +97,81 @@ public class MainGameScreen implements Screen{
 
     @Override
     public void dispose() {
+        player.dispose();
+        controller.dispose();
+        Gdx.input.setInputProcessor(null);
+        mapRenderer.dispose();
+    }
 
+    private void setupViewport(int width, int height) {
+        VIEWPORT.virtualWidth = width;
+        VIEWPORT.viewportHeight = height;
+
+        VIEWPORT.viewportWidth = VIEWPORT.virtualWidth;
+        VIEWPORT.viewportHeight = VIEWPORT.virtualHeight;
+
+        VIEWPORT.physicalWidth = Gdx.graphics.getWidth();
+        VIEWPORT.physicalHeight = Gdx.graphics.getHeight();
+
+        VIEWPORT.aspectRatio = (VIEWPORT.virtualWidth / VIEWPORT.virtualHeight);
+
+        if (VIEWPORT.physicalWidth / VIEWPORT.physicalHeight >= VIEWPORT.aspectRatio) {
+            VIEWPORT.viewportWidth = VIEWPORT.viewportHeight *
+                    (VIEWPORT.physicalWidth / VIEWPORT.physicalHeight);
+            VIEWPORT.viewportHeight = VIEWPORT.virtualHeight;
+        }else {
+            VIEWPORT.viewportWidth = VIEWPORT.virtualWidth;
+            VIEWPORT.viewportHeight = VIEWPORT.viewportWidth *
+                    (VIEWPORT.physicalHeight / VIEWPORT.physicalWidth);
+        }
+        Gdx.app.debug(TAG, "WorldRenderer: virtual: (" +
+        VIEWPORT.virtualWidth + ", " + VIEWPORT.virtualHeight + ")");
+        Gdx.app.debug(TAG, "WorldRenderer: viewport: (" +
+        VIEWPORT.viewportWidth + ", " + VIEWPORT.viewportHeight + ")");
+        Gdx.app.debug(TAG, "WorldRenderer: physical: (" +
+        VIEWPORT.physicalWidth + ", " + VIEWPORT.physicalHeight + ")");
+    }
+
+    private boolean isCollisionWithMapLayer(Rectangle boundingBox) {
+        MapLayer mapCollisionLayer = mapMgr.getCollisionLayer();
+        if (mapCollisionLayer == null) {
+            return false;
+        }
+        Rectangle rectangle = null;
+        for (MapObject object : mapCollisionLayer.getObjects()) {
+            if (object instanceof RectangleMapObject) {
+                rectangle = ((RectangleMapObject)object).getRectangle();
+                if (boundingBox.overlaps(rectangle)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean updatePortalLayerActivation(Rectangle boundingBox) {
+        MapLayer mapPortalLayer = mapMgr.getPortallayer();
+        if (mapPortalLayer == null) {
+            return false;
+        }
+        Rectangle rectangle = null;
+        for (MapObject object : mapPortalLayer.getObjects()) {
+            if (object instanceof RectangleMapObject) {
+                rectangle = ((RectangleMapObject)object).getRectangle();
+                if (boundingBox.overlaps(rectangle)) {
+                    String mapName = object.getName();
+                    if (mapName == null) {
+                        return false;
+                    }
+                    mapMgr.setClosestStartPositionFromScaledUnits(player.getCurrentPosition());
+                    mapMgr.loadMap(mapName);
+                    player.init(mapMgr.getPlayerStartUnitScaled().x, mapMgr.getPlayerStartUnitScaled.y);
+                    mapRenderer.setMap(mapMgr.getCurrentMap());
+                    Gdx.app.debug(TAG, "Portal Activated");
+                    return true
+                }
+            }
+        }
+        return false;
     }
 }
